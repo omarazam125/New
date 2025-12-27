@@ -6,6 +6,7 @@ This dashboard integrates with Hamsa AI voice platform to provide automated cust
 
 ## Environment Variables Setup
 
+
 You need to add the following environment variables to your project. Go to the **Vars** section in the in-chat sidebar to add them.
 
 ### Required Environment Variables
