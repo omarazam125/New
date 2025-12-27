@@ -76,9 +76,13 @@ export async function POST(request: NextRequest) {
     const response = await hamsa.createCallWithPhoneNumber(callParams)
 
     console.log("[v0] Hamsa call created successfully:", response.success ? "SUCCESS" : "FAILED")
+    console.log("[v0] Full Hamsa response:", JSON.stringify(response, null, 2))
     console.log("[v0] Job ID from response:", response.data?.jobId || response.data?.id || "NONE")
 
-    const jobId = response.data?.jobId || response.data?.id
+    const jobId = response.data?.jobId || response.data?.id || response.jobId || response.id
+
+    console.log("[v0] Final extracted jobId:", jobId)
+    console.log("[v0] Returning to client - customerName:", customerName, "phoneNumber:", phoneNumber)
 
     return NextResponse.json({
       success: true,

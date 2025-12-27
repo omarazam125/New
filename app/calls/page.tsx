@@ -222,6 +222,15 @@ export default function CallsPage() {
         throw new Error(data.error || "Failed to create call")
       }
 
+      console.log(
+        "[v0] Checking data for memory save - jobId:",
+        data.jobId,
+        "customerName:",
+        data.customerName,
+        "phoneNumber:",
+        data.phoneNumber,
+      )
+
       if (data.jobId && data.customerName && data.phoneNumber) {
         console.log("[v0] Saving to call memory:", {
           jobId: data.jobId,
@@ -229,6 +238,16 @@ export default function CallsPage() {
           phoneNumber: data.phoneNumber,
         })
         saveCallToMemory(data.jobId, data.customerName, data.phoneNumber)
+        console.log("[v0] Call saved to memory successfully")
+      } else {
+        console.log(
+          "[v0] WARNING: Missing data for memory save. jobId:",
+          data.jobId,
+          "customerName:",
+          data.customerName,
+          "phoneNumber:",
+          data.phoneNumber,
+        )
       }
 
       toast({
