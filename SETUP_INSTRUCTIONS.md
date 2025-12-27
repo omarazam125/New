@@ -10,7 +10,7 @@ You need to add the following environment variables to your project. Go to the *
 
 ### Required Environment Variables
 
-1. **HAMSA_API_KEY** (Required)
+1. **HAMSA_API_KEY** (Required)k
    - Your Hamsa API key from https://dashboard.tryhamsa.com
    - Example: `Token_xxxxxxxxxxxxxxxxxxxxx`
    - Keep this secure - do NOT use `NEXT_PUBLIC_` prefix
