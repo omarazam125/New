@@ -40,7 +40,7 @@ export async function POST(request: NextRequest) {
 
     if (selectedLanguage === "en") {
       // English agent configuration
-      voiceAgentId = "8fa51ff1-710c-4c19-94e5-d9bef28de7bf"
+      voiceAgentId = "c29a3ef0-089d-457b-abea-26326f13c777"
       fromPhoneNumber = "13313111"
       console.log("[v0] Using English agent:", voiceAgentId, "with number:", fromPhoneNumber)
     } else {
