@@ -156,18 +156,16 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    console.log("[v0] Generating AI analysis with Gemini...")
-    const geminiApiKey = process.env.GEMINI_API_KEY
+    console.log("[v0] Generating AI analysis with OpenAI...")
+    const openaiApiKey = process.env.OPENAI_API_KEY
 
-    if (!geminiApiKey) {
-      console.error("[v0] GEMINI_API_KEY environment variable is not set")
+    if (!openaiApiKey) {
+      console.error("[v0] OPENAI_API_KEY environment variable is not set")
       return NextResponse.json(
-        { error: "Gemini API key is not configured. Please add GEMINI_API_KEY to environment variables." },
+        { error: "OpenAI API key is not configured. Please add OPENAI_API_KEY to environment variables." },
         { status: 500 },
       )
     }
-
-    const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiApiKey}`
 
     const analysisPrompt = `⚠️ IMPORTANT: All output must be in English only ⚠️
 
@@ -194,161 +192,74 @@ Provide a comprehensive assessment of the customer's behavior and cooperation (N
 3. **Is the customer stubborn or insisting on something specific?** (Yes/No - with explanation)
 
 4. **Key Discussion Points (7-12 points)**:
-   Extract the most important points discussed in the call:
-   - What was the main topic or issue the customer called about?
-   - What specific information or requests did the customer provide?
-   - Was a solution or agreement reached? What was it?
-   - Did the customer request additional services or specific information?
-   - Did the customer mention any viewpoints or important observations?
-   - Was there any commitment or appointment set?
-   - Were there follow-up steps or required actions identified?
-   - Did the customer mention any complaints or praise?
-   - What are the most important things to remember about this customer?
+   Extract the most important points discussed in the call
 
-5. **7-10 Key Points about Customer Behavior**:
-   - Customer's willingness to engage and communicate
-   - Level of cooperation with the agent
-   - Nature of responses and how they replied
-   - Level of engagement with the topic and discussion
-   - Any reservations or objections from the customer
-   - Apparent satisfaction level from the customer
-   - Seriousness in dialogue and inquiries
+5. **7-10 Key Points about Customer Behavior**
 
-6. **Comprehensive Summary of Customer Behavior and Cooperation** (5-7 sentences):
-   - Description of customer's general behavior
-   - Level of cooperation and responsiveness
-   - Positive observations about their behavior
-   - Any indicators of dissatisfaction or stubbornness
-   - Final assessment of interaction quality from customer's side
+6. **Comprehensive Summary of Customer Behavior and Cooperation** (5-7 sentences)
 
-7. **10 Assessment Questions for Employee Performance with Detailed Answers**:
-   1. Was the customer greeted professionally and warmly?
-   2. Did the employee understand the customer's problem correctly?
-   3. Was the information provided accurate and current?
-   4. Did the employee show high problem-solving capabilities?
-   5. Was the employee patient and interested in customer needs?
-   6. Was the employee's language clear and easy to understand?
-   7. Did the employee give the customer enough time to ask and clarify?
-   8. Did the employee end the call professionally with solution confirmation?
-   9. Did the employee appear well-trained on services and products?
-   10. Was the employee's experience professional and committed to customer satisfaction?
-   
-   For each question: Provide complete answer and assessment (Excellent/Very Good/Good/Average/Poor)
+7. **10 Assessment Questions for Employee Performance with Detailed Answers**
 
-8. **3-5 Recommendations for Improving Employee Performance**:
-   - Strengths to maintain
-   - Suggested improvement areas
-   - Practical tips for better performance
+8. **3-5 Recommendations for Improving Employee Performance**
 
-9. **Overall Employee Performance Score** (1-10):
-   Criteria:
-   - Professionalism and customer handling (30%)
-   - Service quality and solution provided (40%)
-   - Response speed and efficiency (30%)
+9. **Overall Employee Performance Score** (1-10)
 
-10. **Customer Overall Cooperation and Behavior Score** (1-10):
-   Criteria:
-   - Cooperation and willingness to engage (35%)
-   - Quality and completeness of answers (35%)
-   - Friendliness and politeness in communication (30%)
+10. **Customer Overall Cooperation and Behavior Score** (1-10)
 
-⚠️ CRITICAL: 
-- All assessments must be for the CUSTOMER not the employee
-- All text and assessments must be in ENGLISH only
-- Focus on customer behavior, cooperation, and seriousness of responses
-- Extract customer name from conversation and provide it in customerName field
-- Determine customer mood as ONE word: happy, satisfied, neutral, frustrated, or angry
-- Extract discussion points in detail and helpfully ⚠️`
+Respond in JSON format with this structure:
+{
+  "customerName": "string",
+  "customerMood": "happy|satisfied|neutral|frustrated|angry",
+  "customerBehavior": {
+    "score": number,
+    "description": "string"
+  },
+  "keyDiscussionPoints": ["string"],
+  "customerAssessmentQuestions": [{
+    "question": "string",
+    "answer": "string",
+    "status": "string"
+  }],
+  "customerRecommendations": ["string"],
+  "customerOverallScore": number
+}`
 
-    const geminiResponse = await fetch(geminiUrl, {
+    const openaiResponse = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
+        Authorization: `Bearer ${openaiApiKey}`,
       },
       body: JSON.stringify({
-        systemInstruction: {
-          parts: [
-            {
-              text: "You are a specialized analyst in evaluating customer behavior and cooperation in Almoayyed (Y.K. Almoayyed & Sons) customer service center. You must assess the customer's behavior and cooperation, NOT the employee. All your responses must be in English only. Provide a comprehensive and detailed analysis focusing on the customer's cooperation, seriousness of their responses, and overall behavior.",
-            },
-          ],
-        },
-        contents: [
+        model: "gpt-4o-mini",
+        messages: [
           {
-            parts: [
-              {
-                text: analysisPrompt,
-              },
-            ],
+            role: "system",
+            content:
+              "You are a specialized analyst in evaluating customer behavior and cooperation in Almoayyed (Y.K. Almoayyed & Sons) customer service center. You must assess the customer's behavior and cooperation, NOT the employee. All your responses must be in English only and in JSON format.",
+          },
+          {
+            role: "user",
+            content: analysisPrompt,
           },
         ],
-        generationConfig: {
-          temperature: 0.7,
-          maxOutputTokens: 8192,
-          responseMimeType: "application/json",
-          responseSchema: {
-            type: "object",
-            properties: {
-              customerName: { type: "string" },
-              customerMood: {
-                type: "string",
-                enum: ["happy", "satisfied", "neutral", "frustrated", "angry"],
-              },
-              customerBehavior: {
-                type: "object",
-                properties: {
-                  score: { type: "integer" },
-                  description: { type: "string" },
-                },
-                required: ["score", "description"],
-              },
-              keyDiscussionPoints: {
-                type: "array",
-                items: { type: "string" },
-              },
-              customerAssessmentQuestions: {
-                type: "array",
-                items: {
-                  type: "object",
-                  properties: {
-                    question: { type: "string" },
-                    answer: { type: "string" },
-                    status: { type: "string" },
-                  },
-                  required: ["question", "answer", "status"],
-                },
-              },
-              customerRecommendations: {
-                type: "array",
-                items: { type: "string" },
-              },
-              customerOverallScore: { type: "integer" },
-            },
-            required: [
-              "customerName",
-              "customerMood",
-              "customerBehavior",
-              "keyDiscussionPoints",
-              "customerAssessmentQuestions",
-              "customerRecommendations",
-              "customerOverallScore",
-            ],
-          },
-        },
+        temperature: 0.7,
+        max_tokens: 8192,
+        response_format: { type: "json_object" },
       }),
     })
 
-    if (!geminiResponse.ok) {
-      console.error("[v0] Gemini API error:", geminiResponse.status)
-      const errorText = await geminiResponse.text()
+    if (!openaiResponse.ok) {
+      console.error("[v0] OpenAI API error:", openaiResponse.status)
+      const errorText = await openaiResponse.text()
       console.error("[v0] Error details:", errorText)
-      return NextResponse.json({ error: "Failed to generate analysis" }, { status: geminiResponse.status })
+      return NextResponse.json({ error: "Failed to generate analysis" }, { status: openaiResponse.status })
     }
 
-    const geminiData = await geminiResponse.json()
-    const analysisText = geminiData.candidates?.[0]?.content?.parts?.[0]?.text || ""
+    const openaiData = await openaiResponse.json()
+    const analysisText = openaiData.choices?.[0]?.message?.content || ""
 
-    console.log("[v0] Gemini response received, length:", analysisText.length)
+    console.log("[v0] OpenAI response received, length:", analysisText.length)
     console.log("[v0] Response preview:", analysisText.substring(0, 500))
 
     let analysis
@@ -411,13 +322,13 @@ Provide a comprehensive assessment of the customer's behavior and cooperation (N
         }
       }
     } catch (parseError: any) {
-      console.error("[v0] Failed to parse Gemini response:", parseError.message)
+      console.error("[v0] Failed to parse OpenAI response:", parseError.message)
       console.error("[v0] Full response text:", analysisText.substring(0, 2000))
 
       return NextResponse.json(
         {
-          error: "Failed to parse Gemini response. Please try again.",
-          details: "A response was received from Gemini, but it could not be parsed correctly.",
+          error: "Failed to parse OpenAI response. Please try again.",
+          details: "A response was received from OpenAI, but it could not be parsed correctly.",
           responsePreview: analysisText.substring(0, 500),
         },
         { status: 500 },

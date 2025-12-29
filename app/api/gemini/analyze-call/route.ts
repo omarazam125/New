@@ -5,10 +5,10 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const { transcript, customerName, language } = body
 
-    const apiKey = process.env.GEMINI_API_KEY
+    const apiKey = process.env.OPENAI_API_KEY
 
     if (!apiKey) {
-      return NextResponse.json({ error: "Gemini API key not configured" }, { status: 500 })
+      return NextResponse.json({ error: "OpenAI API key not configured" }, { status: 500 })
     }
 
     const analysisPrompt =
@@ -94,48 +94,36 @@ Provide the analysis in JSON format:
   "overallScore": (number 1-10)
 }`
 
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          contents: [
-            {
-              parts: [
-                {
-                  text: analysisPrompt,
-                },
-              ],
-            },
-          ],
-          generationConfig: {
-            temperature: 0.3,
-            topK: 40,
-            topP: 0.95,
-            maxOutputTokens: 2048,
-          },
-        }),
+    const response = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${apiKey}`,
       },
-    )
+      body: JSON.stringify({
+        model: "gpt-4o-mini",
+        messages: [
+          {
+            role: "user",
+            content: analysisPrompt,
+          },
+        ],
+        temperature: 0.3,
+        max_tokens: 2048,
+        response_format: { type: "json_object" },
+      }),
+    })
 
     if (!response.ok) {
       const errorText = await response.text()
-      console.error("[v0] Gemini API Error:", errorText)
-      return NextResponse.json({ error: `Gemini API Error: ${response.status}` }, { status: response.status })
+      console.error("[v0] OpenAI API Error:", errorText)
+      return NextResponse.json({ error: `OpenAI API Error: ${response.status}` }, { status: response.status })
     }
 
     const data = await response.json()
-    const generatedText = data.candidates?.[0]?.content?.parts?.[0]?.text || ""
+    const generatedText = data.choices?.[0]?.message?.content || ""
 
-    const jsonMatch = generatedText.match(/\{[\s\S]*\}/)
-    if (!jsonMatch) {
-      return NextResponse.json({ error: "Failed to parse analysis from Gemini" }, { status: 500 })
-    }
-
-    const analysis = JSON.parse(jsonMatch[0])
+    const analysis = JSON.parse(generatedText)
 
     return NextResponse.json({ analysis })
   } catch (error) {

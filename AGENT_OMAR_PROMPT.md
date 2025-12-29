@@ -7,7 +7,7 @@ This is the comprehensive, production-ready prompt for Agent Omar, your STC coll
 1. Go to your VAPI Dashboard: https://dashboard.vapi.ai
 2. Navigate to your Assistant: https://dashboard.vapi.ai/assistants/bd8d6522-1374-4a01-8430-131fb476308c
 3. Copy the **System Prompt** section below into the "System Prompt" field
-4. Configure the **First Message** in the "First Message" fieldf
+4. Configure the **First Message** in the "First Message" field
 5. Set up **Variable Values** for dynamic customer data
 
 ---

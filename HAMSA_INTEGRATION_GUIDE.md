@@ -11,7 +11,7 @@ The dashboard uses Hamsa's API to create outbound voice calls with AI-powered ag
 ### Core Components
 
 1. **Hamsa Client Library** (`lib/hamsa-client.ts`)
-   - Wrapper around Hamsa REST APIfs
+   - Wrapper around Hamsa REST API
    - Handles authentication and request formatting
    - Provides type-safe methods for all Hamsa operations
 
