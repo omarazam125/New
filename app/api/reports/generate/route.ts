@@ -157,7 +157,16 @@ export async function POST(request: NextRequest) {
     }
 
     console.log("[v0] Generating AI analysis with Gemini...")
-    const geminiApiKey = "AIzaSyADIe8i4RD8RG4zGgQY-UcNA6LfaWQiSrk"
+    const geminiApiKey = process.env.GEMINI_API_KEY
+
+    if (!geminiApiKey) {
+      console.error("[v0] GEMINI_API_KEY environment variable is not set")
+      return NextResponse.json(
+        { error: "Gemini API key is not configured. Please add GEMINI_API_KEY to environment variables." },
+        { status: 500 },
+      )
+    }
+
     const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiApiKey}`
 
     const analysisPrompt = `⚠️ IMPORTANT: All output must be in English only ⚠️
